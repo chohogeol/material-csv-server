@@ -5,10 +5,10 @@ const Papa = require('papaparse');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ✅ 네 실제 시트 CSV URL
+// ✅ CSV URL
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTgKBimBQbM7HCElyq26kEoRP07HdYscaFDuP3Kb35dQNpbKKOJqwsmUdn2k2YgW-ZZ3J5qHgpyiyth/pub?gid=0&single=true&output=csv';
 
-// ✅ 문자열 정규화 함수: 소문자화 + 공백/보이지 않는 문자 제거 + trim
+// ✅ 정규화 함수
 const normalize = (str) =>
   str?.toLowerCase().replace(/[\s\u200B-\u200D\uFEFF]/g, '').trim() || '';
 
@@ -24,10 +24,24 @@ app.get('/search', async (req, res) => {
     const response = await axios.get(CSV_URL);
     const csvText = response.data;
 
-    const { data } = Papa.parse(csvText, { header: true });
+    // ✅ 헤더 false로 파싱 후, 2번째 줄을 열 제목으로 재매핑
+    const parsed = Papa.parse(csvText, { header: false });
+    const rows = parsed.data;
 
-    // 🔍 디버깅용: 첫 3줄 로그 찍기
-    console.log('📦 CSV 첫 3줄 확인:', data.slice(0, 3));
+    const headers = rows[1]; // 2번째 줄이 진짜 열 제목
+    const dataRows = rows.slice(2); // 3번째 줄부터가 진짜 데이터
+
+    // ✅ 행을 객체 배열로 변환
+    const data = dataRows.map(row => {
+      const obj = {};
+      headers.forEach((header, i) => {
+        obj[header.trim()] = row[i]?.trim();
+      });
+      return obj;
+    });
+
+    // ✅ 확인용 로그
+    console.log('✅ 정제된 데이터 앞 3줄:', data.slice(0, 3));
 
     const result = data.filter(row => {
       const description = normalize(row['Description']);
