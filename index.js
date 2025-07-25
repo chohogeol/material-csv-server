@@ -5,9 +5,10 @@ const Papa = require('papaparse');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ✅ Google Sheet CSV URL
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTgKBimBQbM7HCElyq26kEoRP07HdYscaFDuP3Kb35dQNpbKKOJqwsmUdn2k2YgW-ZZ3J5qHgpyiyth/pub?gid=0&single=true&output=csv';
 
-// 공통 문자열 정규화 함수
+// ✅ 문자열 정규화 함수: 소문자화 + 공백 제거 + 특수문자 제거
 const normalize = (str) =>
   str?.toLowerCase().replace(/[\s\u200B-\u200D\uFEFF]/g, '').trim() || '';
 
@@ -23,13 +24,15 @@ app.get('/search', async (req, res) => {
     const response = await axios.get(CSV_URL);
     const csvText = response.data;
 
-    // header 없이 파싱 후 수동으로 3행을 헤더로 지정
+    // ✅ CSV를 헤더 없이 파싱 (header: false)
     const parsed = Papa.parse(csvText, { header: false });
     const rows = parsed.data;
 
-    const headers = rows[2];      // ✅ 3행 (index 2): 열 제목
-    const dataRows = rows.slice(3); // ✅ 4행부터 데이터
+    // ✅ 시트 구조에 맞춰 헤더는 3행 (index 2), 데이터는 4행부터
+    const headers = rows[2];
+    const dataRows = rows.slice(3);
 
+    // ✅ 행을 객체로 재구성
     const data = dataRows.map(row => {
       const obj = {};
       headers.forEach((header, i) => {
@@ -38,9 +41,9 @@ app.get('/search', async (req, res) => {
       return obj;
     });
 
-    // 로그로 확인
     console.log('✅ 파싱된 첫 3개:', data.slice(0, 3));
 
+    // ✅ 검색 조건 필터링
     const result = data.filter(row => {
       const desc = normalize(row['Description']);
       const model = normalize(row['Model No.']);
@@ -54,7 +57,15 @@ app.get('/search', async (req, res) => {
     });
 
     if (result.length > 0) {
-      res.json(result);
+      // ✅ 보기 좋게 포맷 재구성
+      const formatted = result.map(row => ({
+        'Model No': `${row['Description']} / ${row['Model No.']} / ${row['Specification']}`,
+        'Supplier': row['Supplier'],
+        '재고': row['재고'],
+        '자재번호': row['자재번호'],
+        'Location': row['Location']
+      }));
+      res.json(formatted);
     } else {
       res.json({ 메시지: `'${rawQuery}'와 일치하는 자재를 찾을 수 없습니다.` });
     }
