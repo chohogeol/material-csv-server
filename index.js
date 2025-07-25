@@ -13,7 +13,9 @@ const normalize = (str) =>
   str?.toLowerCase().replace(/[\s\u200B-\u200D\uFEFF]/g, '').trim() || '';
 
 app.get('/search', async (req, res) => {
-  const rawQuery = req.query.검색어;
+  const rawQuery = req.query.q; // ✅ 여기만 수정됨
+  console.log("🔍 요청 받은 검색어:", rawQuery);
+
   const query = normalize(rawQuery);
 
   if (!query) {
