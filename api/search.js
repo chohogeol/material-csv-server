@@ -1,22 +1,20 @@
-import { NextResponse } from 'next/server';
-import CONFIG from './config.js';
+// api/search.js
+import { GOOGLE_SCRIPT_URL } from '../../config';
+import fetch from 'node-fetch';
 
-export async function GET(req) {
+export default async function handler(req, res) {
+  const { q } = req.query;
+
+  if (!q) {
+    return res.status(400).json({ error: 'Missing query parameter "q"' });
+  }
+
   try {
-    const { searchParams } = new URL(req.url);
-    const q = searchParams.get('q') || '';
-    const encodedQ = encodeURIComponent(q);
-
-    const targetUrl = `${CONFIG.GOOGLE_SCRIPT_URL}?q=${encodedQ}`;
-
-    const res = await fetch(targetUrl);
-    const data = await res.json();
-
-    return NextResponse.json(data);
+    const response = await fetch(`${GOOGLE_SCRIPT_URL}?q=${encodeURIComponent(q)}`);
+    const data = await response.json();
+    res.status(200).json(data);
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to fetch data', detail: error.message },
-      { status: 500 }
-    );
+    console.error('[API ERROR]', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 }
