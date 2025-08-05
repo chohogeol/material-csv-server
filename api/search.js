@@ -1,19 +1,22 @@
-const axios = require('axios');
-const { GOOGLE_SCRIPT_URL } = require('../config');
+import { NextResponse } from 'next/server';
+import CONFIG from './config.js';
 
-module.exports = async (req, res) => {
-  const { q } = req.query;
-  if (!q) {
-    return res.status(400).json({ error: '검색어가 없습니다' });
-  }
-
+export async function GET(req) {
   try {
-    const response = await axios.get(`${GOOGLE_SCRIPT_URL}?q=${encodeURIComponent(q)}`);
-    res.status(200).json(response.data);
-  } catch (err) {
-    res.status(500).json({
-      error: 'Google Apps Script 요청 실패',
-      detail: err.message
-    });
+    const { searchParams } = new URL(req.url);
+    const q = searchParams.get('q') || '';
+    const encodedQ = encodeURIComponent(q);
+
+    const targetUrl = `${CONFIG.GOOGLE_SCRIPT_URL}?q=${encodedQ}`;
+
+    const res = await fetch(targetUrl);
+    const data = await res.json();
+
+    return NextResponse.json(data);
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Failed to fetch data', detail: error.message },
+      { status: 500 }
+    );
   }
-};
+}
