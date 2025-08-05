@@ -3,8 +3,8 @@ const axios = require('axios');
 const app = express();
 const { GOOGLE_SCRIPT_URL } = require('./config');
 
-// 프록시 라우터
-app.get('/api/search', async (req, res) => {
+// ✅ 이 라우터 경로가 중요! 반드시 '/search' 로 설정
+app.get('/search', async (req, res) => {
   const { q } = req.query;
   if (!q) return res.status(400).json({ error: '검색어가 없습니다' });
 
@@ -16,4 +16,4 @@ app.get('/api/search', async (req, res) => {
   }
 });
 
-module.exports = app; // 반드시 export 해야 Vercel이 처리 가능
+module.exports = app;
