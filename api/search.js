@@ -12,11 +12,15 @@ export default async function handler(req, res) {
   try {
     const url = `${GOOGLE_SCRIPT_URL}?q=${encodeURIComponent(q)}`;
     const response = await fetch(url);
-    const data = await response.json();
 
+    if (!response.ok) {
+      throw new Error(`Fetch failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
     return res.status(200).json(data);
   } catch (error) {
-    console.error('Fetch error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error('Error in API:', error);
+    return res.status(500).json({ error: 'Internal server error', detail: error.message });
   }
 }
