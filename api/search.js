@@ -1,6 +1,6 @@
 // api/search.js
-import { GOOGLE_SCRIPT_URL } from '../../config';
 import fetch from 'node-fetch';
+import { GOOGLE_SCRIPT_URL } from '../config.js';
 
 export default async function handler(req, res) {
   const { q } = req.query;
@@ -10,11 +10,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch(`${GOOGLE_SCRIPT_URL}?q=${encodeURIComponent(q)}`);
+    const url = `${GOOGLE_SCRIPT_URL}?q=${encodeURIComponent(q)}`;
+    const response = await fetch(url);
     const data = await response.json();
-    res.status(200).json(data);
+
+    return res.status(200).json(data);
   } catch (error) {
-    console.error('[API ERROR]', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error('Fetch error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }
